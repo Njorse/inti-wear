@@ -1,0 +1,284 @@
+# INTI WEAR - Proyecto de E-commerce Streetwear Andino
+
+## Resumen del Proyecto
+
+Tienda online de streetwear con diseños inspired in Andean culture from Cusco, Peru. Built with Next.js 14, TypeScript, Tailwind CSS, Prisma (SQLite), Zustand, NextAuth, and Stripe.
+
+---
+
+## Stack Original
+
+- Next.js 14 (App Router)
+- TypeScript
+- Tailwind CSS
+- Prisma + SQLite (dev.db)
+- Zustand (carrito con persistencia)
+- Lucide React (icons)  
+
+---
+
+## Modificaciones y Agregados Completos
+
+### 1. BASE DE DATOS (Prisma)
+
+**Schema actualizado en `prisma/schema.prisma`:**
+
+```prisma
+model Producto {
+  id          String   @id @default(cuid())
+  nombre      String
+  slug        String   @unique
+  descripcion String
+  precio      Float
+  categoria   String
+  imagenUrl   String
+  tallas      String
+  colores     String
+  stock       Int      @default(0)
+  activo      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  password      String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  orders        Order[]
+}
+
+model Order {
+  id              String   @id @default(cuid())
+  userId          String?
+  user            User?    @relation(fields: [userId], references: [id])
+  items           String   // JSON serializado
+  subtotal        Float
+  shipping        Float
+  total           Float
+  nombre          String
+  email           String
+  telefono        String
+  direccion       String
+  ciudad          String
+  estado          String   @default("pendiente")
+  paymentStatus   String   @default("pending")
+  paymentId       String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model Reserva {
+  id        String   @id @default(cuid())
+  productos String   // JSON serializado
+  total     Float
+  nombre    String
+  whatsapp  String
+  estado    String   @default("pendiente")
+  createdAt DateTime @default(now())
+}
+```
+
+**Seed con 8 productos:**
+- Hoodie Chakana Negra ($89)
+- Tee Cóndor ($45)
+- Hoodie Wiphala ($95)
+- Gorra Inti Gold ($38)
+- Tote Inca Maze ($28)
+- Tee Apus ($45)
+- Hoodie Pachamama ($92)
+- Gorra Qosqo ($35)
+
+---
+
+### 2. API ROUTES CREADAS
+
+| Endpoint | Método | Descripción |
+|----------|--------|-------------|
+| `/api/productos` | GET | Lista productos (filtro `?categoria=xxx`) |
+| `/api/productos/[slug]` | GET | Producto individual por slug |
+| `/api/reservas` | POST | Guarda reservas WhatsApp |
+| `/api/auth/[...nextauth]` | GET/POST | Autenticación NextAuth |
+| `/api/auth/register` | POST | Registro de usuarios |
+| `/api/checkout` | POST | Crea sesión de Stripe |
+| `/api/orders` | GET/POST | CRUD de órdenes |
+
+---
+
+### 3. AUTENTICACIÓN (NextAuth v4)
+
+**Archivos creados:**
+- `src/lib/auth.ts` - Configuración de NextAuth conCredentials
+- `src/app/api/auth/[...nextauth]/route.ts` - Handler de autenticación
+- `src/app/api/auth/register/route.ts` - Endpoint de registro
+- `src/types/next-auth.d.ts` - Extensión de tipos
+
+**Características:**
+- Login con email/password
+- Registro de usuarios
+- Sesiones JWT
+- Protección de rutas (cuenta)
+- Integración con Prisma
+
+---
+
+### 4. PÁGINAS CREADAS
+
+| Ruta | Descripción |
+|------|-------------|
+| `/` | Homepage con hero, filtros, grid productos |
+| `/producto/[slug]` | Detalle de producto |
+| `/auth/login` | Página de login |
+| `/auth/register` | Página de registro |
+| `/checkout` | Checkout con formulario de envío |
+| `/checkout/success` | Página de confirmación |
+| `/cuenta` | Mi cuenta (ordenes del usuario) |
+
+---
+
+### 5. COMPONENTES CREADOS/ACTUALIZADOS
+
+| Componente | Descripción |
+|------------|-------------|
+| `Navbar.tsx` | Navbar con blur on scroll, menú mobile |
+| `Footer.tsx` | Footer con links y branding |
+| `ProductoCard.tsx` | Card de producto con hover effects |
+| `ProductoDetail.tsx` | Detail page con selectors |
+| `CartDrawer.tsx` | Carrito en drawer con 2 opciones checkout |
+| `CartProvider.tsx` | Provider del carrito |
+| `Providers.tsx` | Session provider |
+
+---
+
+### 6. STORE (Zustand)
+
+**`src/store/carrito.ts`:**
+- Estado: `items[]`, `total`
+- Persistido en localStorage
+- Acciones: `addItem`, `removeItem`, `updateQuantity`, `clear`
+
+---
+
+### 7. DISEÑO VISUAL MEJORADO
+
+**Colores (tailwind.config.ts):**
+```css
+--negro: #0a0a0a
+--negro-claro: #141414
+--blanco-roto: #F5F0E8
+--dorado-inca: #C9A84C
+--dorado-oscuro: #A88B3D
+--rojo-andino: #8B1A1A
+--gris-oscuro: #1F1F1F
+--gris-medio: #2A2A2A
+```
+
+**Features de diseño:**
+- Animaciones fade-in-up escalonadas
+- Gradientes y efectos blur
+- Texturas sutiles (noise pattern)
+- Scrollbar personalizada
+- Efectos shine en hover
+- Tipografía: Space Grotesk (display) + Inter (body)
+- Navbar con blur on scroll
+- Hero con gradiente radial y elementos decorativos
+
+---
+
+### 8. CONFIGURACIÓN DE VARIABLES (.env)
+
+```env
+DATABASE_URL=file:./dev.db
+NEXTAUTH_SECRET=supersecretkey123456789intiwear
+NEXTAUTH_URL=http://localhost:3001
+STRIPE_SECRET_KEY=sk_test_xxxx
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_xxxx
+WHATSAPP_NUMBER=51XXXXXXXXX
+NEXT_PUBLIC_BASE_URL=http://localhost:3001
+```
+
+---
+
+### 9. FUNCIONALIDADES IMPLEMENTADAS
+
+✅ Catálogo de productos con filtros por categoría
+✅ Página de detalle de producto con selectors (talla, color, cantidad)
+✅ Carrito persistido en localStorage
+✅ Checkout con formulario de envío
+✅ Integración con Stripe (pasarela de pagos)
+✅ Autenticación usuarios (registro/login)
+✅ Mi Cuenta con historial de pedidos
+✅ Reserva por WhatsApp como alternativa
+✅ Diseño dark luxury premium con animaciones
+
+---
+
+### 10. ARCHIVOS IMPORTANTES
+
+```
+tiendaInti/
+├── prisma/
+│   ├── schema.prisma      # Schema completo
+│   ├── seed.ts            # Seed de productos
+│   └── dev.db             # SQLite DB
+├── src/
+│   ├── app/
+│   │   ├── api/           # API routes
+│   │   ├── auth/          # Login/Register pages
+│   │   ├── checkout/      # Checkout pages
+│   │   ├── producto/[slug]/ # Producto detail
+│   │   ├── cuenta/        # User account
+│   │   ├── page.tsx       # Homepage
+│   │   ├── layout.tsx     # Root layout
+│   │   └── globals.css    # Custom styles
+│   ├── components/        # React components
+│   ├── store/carrito.ts   # Zustand store
+│   ├── lib/
+│   │   ├── prisma.ts      # Prisma client
+│   │   └── auth.ts        # Auth config
+│   └── types/             # TypeScript types
+├── tailwind.config.ts     # Tailwind config
+├── next.config.mjs        # Next config
+└── .env                   # Environment variables
+```
+
+---
+
+### 11. COMANDOS ÚTILES
+
+```bash
+# Desarrollo
+npm run dev
+
+# Build producción
+npm run build
+
+# Prisma Studio
+npx prisma studio
+
+# Seed base de datos
+npx prisma db seed
+
+# Generar Prisma client
+npx prisma generate
+```
+
+---
+
+### 12. NOTAS PARA DEPLOY
+
+- Necesitas agregar tus propias keys de Stripe en `.env`
+- Para WhatsApp, reemplaza `51XXXXXXXXX` con tu número real
+- La DB es SQLite local (dev.db) - para producción usar Vercel Postgres
+- El proyecto está configurado para Next.js 14
+
+---
+
+## Estado del Proyecto
+
+🏗️ **Funcional y listo para usar en desarrollo**
+
+Para producción: configurar Stripe keys, usar Postgres en lugar de SQLite, y hacer deploy a Vercel.
